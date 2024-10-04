@@ -189,10 +189,10 @@ impl RunArgs {
                         tx.transaction_type == Some(SYSTEM_TRANSACTION_TYPE)
                     {
                         pb.set_position((index + 1) as u64);
-                        continue;
+                        continue
                     }
                     if tx.hash == tx_hash {
-                        break;
+                        break
                     }
 
                     configure_tx_env(&mut env, &tx.inner);
@@ -232,19 +232,26 @@ impl RunArgs {
         let result = {
             executor.set_trace_printer(self.trace_printer);
 
-            if tx.inner.signature.is_some() {
-                // check if recovery id corresponds to a quorum private transaction (https://docs.goquorum.conssensys.io/concepts/privacy/private-and-public#private-transactions)
-                let v = tx.inner.signature.unwrap().v;
-                let is_private_quorum_txn = v >= Uint::from(37) && v <= Uint::from(38);
+            if let Some(signature) = tx.inner.signature {
+                let v = signature.v;
+                let is_private_quorum_txn = v == Uint::from(37) || v == Uint::from(38);
                 if is_private_quorum_txn {
                     println!("Private quorum transaction detected.");
-                    let result: TransportResult<Bytes> = provider
+                    match provider
                         .client()
                         .request("eth_getQuorumPayload", (tx.input.clone(),))
-                        .await;
-                    trace!(quorum_private_payload=?result, "fetch eth_getQuorumPayload");
-                    if result.is_ok() {
-                        tx.input = result.unwrap();
+                        .await
+                    {
+                        Ok(tessera_input) => {
+                            trace!(quorum_private_payload=?tessera_input, "fetch eth_getQuorumPayload");
+                            tx.input = tessera_input;
+                        }
+                        Err(e) => {
+                            return Err(eyre::eyre!(
+                                "Failed to fetch quorum private payload: {:?}",
+                                e
+                            ))
+                        }
                     }
                 }
             }
