@@ -1,4 +1,4 @@
-use alloy_primitives::{Uint, U256, Bytes};
+use alloy_primitives::{Bytes, Uint, U256};
 use alloy_provider::Provider;
 use alloy_rpc_types::BlockTransactions;
 use alloy_transport::TransportResult;
@@ -236,27 +236,25 @@ impl RunArgs {
                 let v = signature.v;
                 let is_private_quorum_txn = v == Uint::from(37) || v == Uint::from(38);
                 if is_private_quorum_txn {
-                    trace!("Private quorum transaction detected.");
-                    
+                    println!("Private quorum transaction detected.");
+
                     // Ideally, this should be a method implemented in alloy_provider
                     let result: TransportResult<Bytes> = provider
                         .client()
                         .request("eth_getQuorumPayload", (tx.input.clone(),))
                         .await;
-        
+
                     match result {
                         Ok(tessera_input) => {
-                            trace!(quorum_private_payload=?tessera_input, "fetch eth_getQuorumPayload");
-                            
-                            // Only if tessera_input is not empty bytes, update the transaction input
+                            // If non-empty, use tessera payload
                             if !tessera_input.is_empty() {
                                 tx.input = tessera_input;
                             } else {
-                                warn!("eth_getQuorumPayload returned empty bytes, using original tx.input instead");
+                                println!("eth_getQuorumPayload returned empty bytes, using original tx.input instead");
                             }
                         }
                         Err(e) => {
-                            warn!("eth_getQuorumPayload threw an error {:?}, proceeding with original tx.input", e);
+                            println!("eth_getQuorumPayload threw an error: {e}, proceeding with original tx.input");
                         }
                     }
                 }
