@@ -1,4 +1,4 @@
-use alloy_primitives::{Bytes, Uint, U256};
+use alloy_primitives::{Uint, U256, Bytes};
 use alloy_provider::Provider;
 use alloy_rpc_types::BlockTransactions;
 use alloy_transport::TransportResult;
