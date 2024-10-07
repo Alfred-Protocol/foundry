@@ -242,7 +242,6 @@ impl RunArgs {
                 if is_private_quorum_txn {
                     println!("Private quorum transaction detected.");
 
-                    // Ideally, this should be a method implemented in alloy_provider
                     let result: TransportResult<Bytes> = provider
                         .client()
                         .request("eth_getQuorumPayload", (tx.input.clone(),))
@@ -250,12 +249,11 @@ impl RunArgs {
 
                     match result {
                         Ok(tessera_input) => {
-                            // If non-empty, use tessera payload
-                            if !tessera_input.is_empty() {
-                                tx.input = tessera_input;
-                            } else {
-                                return Err(eyre::eyre!("eth_getQuorumPayload returned empty bytes, cannot execute transaction {:?}", tx.hash));
-                            }
+                            println!(
+                                "Executing private quorum transaction with quorum payload: {:?}",
+                                tessera_input.to_string()
+                            );
+                            tx.input = tessera_input;
                         }
                         Err(e) => {
                             return Err(eyre::eyre!("eth_getQuorumPayload threw an error: {e}, cannot execute transaction {:?}", tx.hash));
