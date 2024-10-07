@@ -234,9 +234,10 @@ impl RunArgs {
 
             if let Some(signature) = tx.inner.signature {
                 let v = signature.v;
-                
+
                 // 37/38 for private quorum transactions, tessera hash is 64 bytes
-                let is_private_quorum_txn = (v == Uint::from(37) || v == Uint::from(38)) && tx.input.len() == 64;
+                let is_private_quorum_txn =
+                    (v == Uint::from(37) || v == Uint::from(38)) && tx.input.len() == 64;
 
                 if is_private_quorum_txn {
                     println!("Private quorum transaction detected.");
